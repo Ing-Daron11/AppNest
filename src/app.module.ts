@@ -6,6 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BrandsModule } from './brands/brands.module';
 import { AuthModule } from './auth/auth.module';
+import { EquipmentModule } from './equipment/equipment.module';
+import { ReservationModule } from './reservation/reservation.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 
 @Module({
   imports: [
@@ -20,9 +23,10 @@ import { AuthModule } from './auth/auth.module';
       synchronize: true, // Note: Only use this in development
       autoLoadEntities: true
     }),
-    CarsModule,
-    BrandsModule,
-    AuthModule
+    AuthModule,
+    EquipmentModule,
+    ReservationModule,
+    MaintenanceModule
     ],
   controllers: [AppController],
   providers: [AppService],
