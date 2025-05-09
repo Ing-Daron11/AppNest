@@ -70,7 +70,7 @@ export class AuthController {
   }
 
   @Get('protected3')
-  @Auth(ValidRoles.superuser, ValidRoles.admin)
+  @Auth(ValidRoles.technical, ValidRoles.admin)
   protected3(@GetUser() user: User) {
     return {
       user,
