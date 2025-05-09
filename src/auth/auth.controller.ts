@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, UseGuards, SetMetadata, Request, Req, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  SetMetadata,
+  Request,
+  Req,
+  Param,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -15,59 +25,56 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  createUser(@Body() createUserDto: CreateUserDto){
+  createUser(@Body() createUserDto: CreateUserDto) {
     return this.authService.createUser(createUserDto);
   }
 
   @Post('login')
-  loginUser(@Body() loginUserDto: LoginUserDto){
+  loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
   }
 
   @Get('protected')
   @UseGuards(AuthGuard())
-  protected1(){
+  protected1() {
     return 'esto es una ruta protegida';
   }
 
   @Get('private')
-  @UseGuards( AuthGuard() )
+  @UseGuards(AuthGuard())
   testingPrivateRoute(
     @Req() request: Express.Request,
     @GetUser() user: User,
     @GetUser('email') userEmail: string,
   ) {
-
     console.log(request);
 
     return {
       ok: true,
       message: 'Hola Mundo Private',
       user,
-      userEmail
-    }
+      userEmail,
+    };
   }
 
   @Get('protected2/:id')
   //@SetMetadata('roles', ['admin','user'])
   @UseGuards(AuthGuard(), UserRoleGuard)
   @RoleProtected(ValidRoles.admin, ValidRoles.user)
-  protected2(@GetUser() user: User, @Param('id') id: string ){
-    
+  protected2(@GetUser() user: User, @Param('id') id: string) {
     return {
       id,
       user,
-      message: "OK"
-    }
+      message: 'OK',
+    };
   }
 
   @Get('protected3')
   @Auth(ValidRoles.superuser, ValidRoles.admin)
-  protected3(@GetUser() user: User ){
-    
+  protected3(@GetUser() user: User) {
     return {
       user,
-      message: "OK"
-    }
-  }  
+      message: 'OK',
+    };
+  }
 }

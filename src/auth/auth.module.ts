@@ -14,21 +14,21 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 
   imports: [
     ConfigModule,
-    PassportModule.register({defaultStrategy: 'jwt'}),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forFeature([User]),
     // JwtModule.register({
     //   secret: "secret",
     //   signOptions: {expiresIn: 1000}
     // })
-    
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET') as string | 'secret',
-        signOptions: {expiresIn: configService.get('JWT_EXPIRES_IN') | 6000, }
-      })
-    })
+        signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') | 6000 },
+      }),
+    }),
   ],
 })
 export class AuthModule {}

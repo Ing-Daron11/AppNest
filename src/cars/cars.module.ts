@@ -8,10 +8,7 @@ import { BrandsModule } from 'src/brands/brands.module';
 
 @Module({
   controllers: [CarsController],
-  providers: [CarsService], 
-  imports: [
-    TypeOrmModule.forFeature([ Car ]),
-    BrandsModule,
-  ],
+  providers: [CarsService],
+  imports: [TypeOrmModule.forFeature([Car]), BrandsModule],
 })
 export class CarsModule {}
