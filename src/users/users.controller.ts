@@ -2,7 +2,10 @@ import { Controller, Get, Param, Delete, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/interfaces/valid-roles';
-//import { User } from '../auth/entities/user.entity';
+import { User } from '../auth/entities/user.entity';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Patch, Body } from '@nestjs/common';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -24,5 +27,19 @@ export class UsersController {
   @Auth(ValidRoles.admin)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Get('me')
+  @Auth() // cualquier usuario autenticado puede acceder
+  getProfile(@GetUser() user: User) {
+    return this.usersService.getProfile(user.id);
+  }
+
+  @Patch(':id')
+  @Auth(ValidRoles.admin, ValidRoles.admin)
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto  ) {
+    return this.usersService.update(id, updateUserDto);
   }
 }
