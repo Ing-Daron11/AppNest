@@ -19,7 +19,7 @@ export class CreateEquipmentDto {
      
      @IsEnum(EquipmentCategory)
      @IsNotEmpty()
-     category?: string;
+     category?: EquipmentCategory;
 
      @IsEnum(EquipmentStatus)
      @IsOptional()
