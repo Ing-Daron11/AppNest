@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
 
 import { User } from './entities/user.entity';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -13,6 +14,19 @@ export class AuthService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
+
+  createUser(createUserDto: CreateUserDto) {
+        try {
+          const { password, ...userData } = createUserDto;
+          const user = this.userRepository.create({
+            password: bcrypt.hashSync(password, 10),
+            ...userData,
+          });
+          return this.userRepository.save(user);
+        } catch (error) {
+          throw new Error('Error creating user');
+        }
+    }
 
   async loginUser(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;

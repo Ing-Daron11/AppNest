@@ -10,7 +10,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleProtected } from './decorators/role-protected.decorator';
@@ -27,6 +27,11 @@ export class AuthController {
   @Post('login')
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
+  }
+
+  @Post('register')
+  createUser(@Body() createUserDto: CreateUserDto) {
+    return this.authService.createUser(createUserDto);
   }
 
   @Get('protected')

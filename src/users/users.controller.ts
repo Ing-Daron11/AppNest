@@ -6,17 +6,12 @@ import { User } from '../auth/entities/user.entity';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Patch, Body } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
-  @Auth(ValidRoles.admin) // Solo el admin puede crear usuarios
-  createUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
-  }
+  
     
   @Get()
   @Auth(ValidRoles.admin)

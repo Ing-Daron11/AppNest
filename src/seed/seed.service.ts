@@ -23,7 +23,7 @@ export class SeedService implements OnApplicationBootstrap {
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const adminUser = this.userRepository.create({
       name: 'Admin',
-      email: 'admin@example.com',
+      email: 'admin@gmail.com',
       password: hashedPassword,
       roles: ['admin'],
     });

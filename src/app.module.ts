@@ -10,6 +10,7 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { SeedModule } from './seed/seed.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { SeedModule } from './seed/seed.module';
     ReservationModule,
     MaintenanceModule,
     SeedModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
