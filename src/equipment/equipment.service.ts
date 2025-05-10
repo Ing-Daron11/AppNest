@@ -6,6 +6,7 @@ import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { Equipment } from './entities/equipment.entity';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { SearchEquipmentDto } from './dto/search-equipment.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { EquipmentStatus } from './enums/equipment.enum';
 
@@ -40,32 +41,17 @@ export class EquipmentService {
         }
     }
 
-    async findOne(criteria: string | FindOptionsWhere<Equipment>): Promise<Equipment> {
+    async findOne(id: string): Promise<Equipment> {
         try {
-            let findOptions: FindOptionsWhere<Equipment>;
-
-            // Si es string, asumimos que es un ID
-            if (typeof criteria === 'string') {
-                findOptions = { id: criteria };
-            } else {
-                findOptions = criteria;
-            }
-
-            const equipment = await this.equipmentRepository.findOneBy(findOptions);
-
+            const equipment = await this.equipmentRepository.findOneBy({
+                id,
+            } as FindOptionsWhere<Equipment>);
             if (!equipment) {
-                const criteriaStr = typeof criteria === 'string'
-                    ? `id ${criteria}`
-                    : Object.entries(criteria)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join(', ');
-
-                throw new Error(`Equipment with ${criteriaStr} not found`);
+                throw new NotFoundException(`Equipment with id ${id} not found`);
             }
-
             return equipment;
         } catch (error) {
-            throw new Error(`Error fetching equipment: ${error.message}`);
+            throw new InternalServerErrorException(`Error finding equipment: ${error.message}`);
         }
     }
 
@@ -92,6 +78,28 @@ export class EquipmentService {
         } catch (error) {
             throw new InternalServerErrorException('Error deleting equipment');
         }
+    }
+
+    async search(filters: SearchEquipmentDto): Promise<Equipment[]> {
+        const { name, category, status, limit = 10, offset = 0 } = filters;
+
+        const query = this.equipmentRepository.createQueryBuilder('equipment');
+
+        if (name) {
+            query.andWhere('equipment.name ILIKE :name', { name: `%${name}%` });
+        }
+
+        if (category) {
+            query.andWhere('equipment.category = :category', { category });
+        }
+
+        if (status) {
+            query.andWhere('equipment.status = :status', { status });
+        }
+
+        query.skip(offset).take(limit).orderBy('equipment.addedAt', 'DESC');
+
+        return query.getMany();
     }
 
     private async updateStatus(
