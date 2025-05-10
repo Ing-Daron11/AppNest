@@ -34,7 +34,7 @@ export class EquipmentController {
         status: 401,
         description: 'Unauthorized',
     })
-    @Auth(ValidRoles.admin)
+    // @Auth(ValidRoles.admin)
     create(@Body() equipmentDto: CreateEquipmentDto): Promise<Equipment> {
         try {
             return this.equipmentService.create(equipmentDto);
