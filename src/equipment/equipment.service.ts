@@ -1,19 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';   
+import { Repository } from 'typeorm';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 
 import { Equipment } from './entities/equipment.entity';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { EquipmentStatus } from './enums/equipment.enum';
 
 @Injectable()
 export class EquipmentService {
     constructor(
         @InjectRepository(Equipment)
         private readonly equipmentRepository: Repository<Equipment>,
-    ) {}
+        // Si necesitamos un DataSource para transacciones:
+        // private readonly dataSource: DataSource,
+    ) { }
 
     async create(equipmentDto: CreateEquipmentDto): Promise<Equipment> {
         try {
@@ -40,30 +43,97 @@ export class EquipmentService {
     async findOne(criteria: string | FindOptionsWhere<Equipment>): Promise<Equipment> {
         try {
             let findOptions: FindOptionsWhere<Equipment>;
-            
+
             // Si es string, asumimos que es un ID
             if (typeof criteria === 'string') {
                 findOptions = { id: criteria };
             } else {
                 findOptions = criteria;
             }
-            
+
             const equipment = await this.equipmentRepository.findOneBy(findOptions);
-            
+
             if (!equipment) {
-                const criteriaStr = typeof criteria === 'string' 
-                    ? `id ${criteria}` 
+                const criteriaStr = typeof criteria === 'string'
+                    ? `id ${criteria}`
                     : Object.entries(criteria)
                         .map(([key, value]) => `${key}: ${value}`)
                         .join(', ');
-                        
+
                 throw new Error(`Equipment with ${criteriaStr} not found`);
             }
-            
+
             return equipment;
         } catch (error) {
             throw new Error(`Error fetching equipment: ${error.message}`);
         }
     }
 
+    async update(id: string, dto: UpdateEquipmentDto): Promise<Equipment> {
+        const equipment = await this.equipmentRepository.preload({
+            id,
+            ...dto,
+        });
+        if (!equipment) {
+            throw new NotFoundException(`Equipment with id ${id} not found`);
+        }
+        try {
+            await this.equipmentRepository.save(equipment);
+            return await this.findOne(id);
+        } catch (error) {
+            throw new InternalServerErrorException('Error updating equipment');
+        }
+    }
+
+    async remove(id: string): Promise<void> {
+        const equipment = await this.findOne(id);
+        try {
+            await this.equipmentRepository.remove(equipment);
+        } catch (error) {
+            throw new InternalServerErrorException('Error deleting equipment');
+        }
+    }
+
+    private async updateStatus(
+        id: string,
+        newStatus: EquipmentStatus,
+    ): Promise<Equipment> {
+        const equipment = await this.findOne(id);
+        const currentStatus = equipment.status;
+
+        const validTransitions: Record<EquipmentStatus, EquipmentStatus[]> = {
+            [EquipmentStatus.AVAILABLE]: [EquipmentStatus.RENTED, EquipmentStatus.MAINTENANCE],
+            [EquipmentStatus.RENTED]: [EquipmentStatus.AVAILABLE, EquipmentStatus.MAINTENANCE],
+            [EquipmentStatus.MAINTENANCE]: [EquipmentStatus.AVAILABLE],
+        };
+
+        const allowedNextStates = validTransitions[currentStatus] || [];
+
+        if (!allowedNextStates.includes(newStatus)) {
+            throw new Error(
+                `Invalid status change from '${currentStatus}' to '${newStatus}'`,
+            );
+        }
+
+        equipment.status = newStatus;
+
+        try {
+            return await this.equipmentRepository.save(equipment);
+        } catch (error) {
+            throw new InternalServerErrorException('Error updating equipment status');
+        }
+    }
+
+
+    async markAsRented(id: string): Promise<Equipment> {
+        return this.updateStatus(id, EquipmentStatus.RENTED);
+    }
+
+    async markAsAvailable(id: string): Promise<Equipment> {
+        return this.updateStatus(id, EquipmentStatus.AVAILABLE);
+    }
+
+    async markInMaintenance(id: string): Promise<Equipment> {
+        return this.updateStatus(id, EquipmentStatus.MAINTENANCE);
+    }
 }
