@@ -11,7 +11,6 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 import { EquipmentStatus } from './enums/equipment.enum';
 import { SearchEquipmentDto } from './dto/search-equipment.dto';
-import { UpdateBrandDto } from 'src/brands/dto/update-brand.dto';
 import { UpdateEquipmentStatusDto } from './dto/update-equipment-status.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 
