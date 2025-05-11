@@ -153,7 +153,7 @@ export class EquipmentController {
     // @Auth(ValidRoles.admin, ValidRoles.technical)
     updateStatus(
         @Param('id') id: string,
-        @Body('status') status: UpdateEquipmentStatusDto,
+        @Body() status: UpdateEquipmentStatusDto,
     ): Promise<Equipment> {
         const { status: newStatus } = status;
 

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
@@ -126,6 +126,10 @@ export class EquipmentService {
         const equipment = await this.findOne(id);
         const currentStatus = equipment.status;
 
+        if (currentStatus === newStatus) {
+            return equipment; // No status change needed
+        }
+
         const validTransitions: Record<EquipmentStatus, EquipmentStatus[]> = {
             [EquipmentStatus.AVAILABLE]: [EquipmentStatus.RENTED, EquipmentStatus.MAINTENANCE],
             [EquipmentStatus.RENTED]: [EquipmentStatus.AVAILABLE, EquipmentStatus.MAINTENANCE],
@@ -135,8 +139,9 @@ export class EquipmentService {
         const allowedNextStates = validTransitions[currentStatus] || [];
 
         if (!allowedNextStates.includes(newStatus)) {
-            throw new Error(
-                `Invalid status change from '${currentStatus}' to '${newStatus}'`,
+            throw new BadRequestException(
+                `Invalid status change from '${currentStatus}' to '${newStatus}'. ` +
+                `Equipment in '${currentStatus}' status can only transition to: ${allowedNextStates.join(', ')}`
             );
         }
 
