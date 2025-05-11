@@ -6,7 +6,7 @@ export class CreateEquipmentDto {
      @IsString()
      @IsNotEmpty()
      @MinLength(3)
-     @MaxLength(20)
+     @MaxLength(50)
      name: string;
      
      @IsString()
