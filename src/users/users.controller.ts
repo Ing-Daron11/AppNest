@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Delete, Post } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/interfaces/valid-roles';
@@ -6,12 +6,18 @@ import { User } from '../auth/entities/user.entity';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Patch, Body } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  
+  @Get('me')
+  @Auth()
+  getProfile(@GetUser() user: User) {
+    console.log('Usuario autenticado:', user);
+    return this.usersService.getProfile(user.id);
+  }
     
   @Get()
   @Auth(ValidRoles.admin)
@@ -31,14 +37,8 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get('me')
-  @Auth() // cualquier usuario autenticado puede acceder
-  getProfile(@GetUser() user: User) {
-    return this.usersService.getProfile(user.id);
-  }
-
   @Patch(':id')
-  @Auth(ValidRoles.admin, ValidRoles.admin)
+  @Auth(ValidRoles.admin)
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto  ) {

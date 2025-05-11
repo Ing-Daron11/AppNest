@@ -11,6 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtStrategy],
 
   imports: [
     ConfigModule,
@@ -25,8 +26,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET') as string | 'secret',
-        signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') | 6000 },
+        secret: configService.get<string>('JWT_SECRET') || 'secret',
+        signOptions: { expiresIn: configService.get<number>('JWT_EXPIRES_IN') || '2h' }, // default 2 hours
       }),
     }),
   ],
