@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { SeedModule } from './seed/seed.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
     EquipmentModule,
     ReservationModule,
     MaintenanceModule,
+    SeedModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

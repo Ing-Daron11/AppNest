@@ -1,4 +1,5 @@
 import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 
 export class CreateUserDto {
   @IsString({ message: 'El nombre es obligario' })

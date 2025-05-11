@@ -10,7 +10,9 @@ services:
       POSTGRES_DB: ${DB_NAME}
     container_name: equiprent
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql/data #esto es para la persistencia de datos
+volumes:
+  postgres_data: #esto tambien es para la persistencia de datos
 
   # pgadmin:
   #   image: dpage/pgadmin4
