@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CarsModule } from './cars/cars.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BrandsModule } from './brands/brands.module';
 import { AuthModule } from './auth/auth.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { ReservationModule } from './reservation/reservation.module';
