@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
@@ -21,10 +21,27 @@ export class EquipmentService {
 
     async create(equipmentDto: CreateEquipmentDto): Promise<Equipment> {
         try {
+
+            // verificar si ya existe el equipo
+            const existingEquipment = await this.equipmentRepository.findOne({
+                where: {
+                    name: equipmentDto.name,
+                    model: equipmentDto.model
+                }
+            })
+
+            if (existingEquipment) {
+                throw new ConflictException(`Equipment with name ${equipmentDto.name} already exists`);
+            }
+
             const equipment = this.equipmentRepository.create(equipmentDto);
             await this.equipmentRepository.save(equipment);
             return equipment;
         } catch (error) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+
             throw new Error(`Error creating equipment: ${error.message}`);
         }
     }
