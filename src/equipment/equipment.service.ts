@@ -68,6 +68,9 @@ export class EquipmentService {
             }
             return equipment;
         } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
             throw new InternalServerErrorException(`Error finding equipment: ${error.message}`);
         }
     }
