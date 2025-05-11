@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
@@ -21,10 +21,27 @@ export class EquipmentService {
 
     async create(equipmentDto: CreateEquipmentDto): Promise<Equipment> {
         try {
+
+            // verificar si ya existe el equipo
+            const existingEquipment = await this.equipmentRepository.findOne({
+                where: {
+                    name: equipmentDto.name,
+                    model: equipmentDto.model
+                }
+            })
+
+            if (existingEquipment) {
+                throw new ConflictException(`Equipment with name ${equipmentDto.name} already exists`);
+            }
+
             const equipment = this.equipmentRepository.create(equipmentDto);
             await this.equipmentRepository.save(equipment);
             return equipment;
         } catch (error) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+
             throw new Error(`Error creating equipment: ${error.message}`);
         }
     }
@@ -97,7 +114,7 @@ export class EquipmentService {
             query.andWhere('equipment.status = :status', { status });
         }
 
-        query.skip(offset).take(limit).orderBy('equipment.addedAt', 'DESC');
+        query.skip(offset).take(limit).orderBy('equipment.createdAt', 'DESC');
 
         return query.getMany();
     }
@@ -109,6 +126,10 @@ export class EquipmentService {
         const equipment = await this.findOne(id);
         const currentStatus = equipment.status;
 
+        if (currentStatus === newStatus) {
+            return equipment; // No status change needed
+        }
+
         const validTransitions: Record<EquipmentStatus, EquipmentStatus[]> = {
             [EquipmentStatus.AVAILABLE]: [EquipmentStatus.RENTED, EquipmentStatus.MAINTENANCE],
             [EquipmentStatus.RENTED]: [EquipmentStatus.AVAILABLE, EquipmentStatus.MAINTENANCE],
@@ -118,8 +139,9 @@ export class EquipmentService {
         const allowedNextStates = validTransitions[currentStatus] || [];
 
         if (!allowedNextStates.includes(newStatus)) {
-            throw new Error(
-                `Invalid status change from '${currentStatus}' to '${newStatus}'`,
+            throw new BadRequestException(
+                `Invalid status change from '${currentStatus}' to '${newStatus}'. ` +
+                `Equipment in '${currentStatus}' status can only transition to: ${allowedNextStates.join(', ')}`
             );
         }
 
