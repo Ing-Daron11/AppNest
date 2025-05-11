@@ -1,108 +1,153 @@
 import {
-    Injectable,
-    NotFoundException,
-    InternalServerErrorException,
-  } from '@nestjs/common';
-  import { InjectRepository } from '@nestjs/typeorm';
-  import { Repository, FindOptionsWhere } from 'typeorm';
-  
-  import { Reservation } from './entities/reservation.entity';
-  import { CreateReservationDto } from './dto/create-reservation.dto';
-  import { UpdateReservationDto } from './dto/update-reservation.dto';
-  import { SearchReservationDto } from './dto/search-reservation.dto';
-  import { PaginationDto } from 'src/common/dto/pagination.dto';
-  
-  @Injectable()
-  export class ReservationService {
-    constructor(
-      @InjectRepository(Reservation)
-      private readonly reservationRepository: Repository<Reservation>,
-    ) {}
-  
-    async create(dto: CreateReservationDto): Promise<Reservation> {
-      try {
-        const reservation = this.reservationRepository.create(dto);
-        await this.reservationRepository.save(reservation);
-        return reservation;
-      } catch (error) {
-        throw new InternalServerErrorException('Error creating reservation');
-      }
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
+
+import { Reservation } from './entities/reservation.entity';
+import { CreateReservationDto } from './dto/create-reservation.dto';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { SearchReservationDto } from './dto/search-reservation.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Equipment } from 'src/equipment/entities/equipment.entity';
+import { User } from 'src/auth/entities/user.entity';
+
+@Injectable()
+export class ReservationService {
+  constructor(
+    @InjectRepository(Reservation)
+    private readonly reservationRepository: Repository<Reservation>,
+  ) {}
+
+  async create(dto: CreateReservationDto): Promise<Reservation> {
+    const { equipmentId, userId, startDate, endDate } = dto;
+
+    const equipment = await this.reservationRepository.manager.findOne(Equipment, {
+      where: { id: equipmentId },
+    });
+
+    if (!equipment) {
+      throw new NotFoundException(`Equipment with id ${equipmentId} not found`);
     }
-  
-    async findAll(pagination: PaginationDto): Promise<Reservation[]> {
-      const { limit = 10, offset = 0 } = pagination;
-      return this.reservationRepository.find({
-        take: limit,
-        skip: offset,
-        order: { createdAt: 'DESC' },
-      });
+
+    const user = await this.reservationRepository.manager.findOne(User, {
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
     }
-  
-    async findOne(id: string): Promise<Reservation> {
-      const reservation = await this.reservationRepository.findOneBy({
-        id,
-      } as FindOptionsWhere<Reservation>);
-  
-      if (!reservation) {
-        throw new NotFoundException(`Reservation with id ${id} not found`);
-      }
-  
+
+    const reservation = this.reservationRepository.create({
+      equipment,
+      user,
+      startDate,
+      endDate,
+    });
+
+    try {
+      await this.reservationRepository.save(reservation);
       return reservation;
-    }
-  
-    async update(id: string, dto: UpdateReservationDto): Promise<Reservation> {
-      const reservation = await this.reservationRepository.preload({
-        id,
-        ...dto,
-      });
-  
-      if (!reservation) {
-        throw new NotFoundException(`Reservation with id ${id} not found`);
-      }
-  
-      try {
-        await this.reservationRepository.save(reservation);
-        return this.findOne(id);
-      } catch (error) {
-        throw new InternalServerErrorException('Error updating reservation');
-      }
-    }
-  
-    async remove(id: string): Promise<void> {
-      const reservation = await this.findOne(id);
-      try {
-        await this.reservationRepository.remove(reservation);
-      } catch (error) {
-        throw new InternalServerErrorException('Error deleting reservation');
-      }
-    }
-  
-    async search(filters: SearchReservationDto): Promise<Reservation[]> {
-      const { userId, equipmentId, startDate, endDate, limit = 10, offset = 0 } = filters;
-  
-      const query = this.reservationRepository.createQueryBuilder('reservation');
-  
-      if (userId) {
-        query.andWhere('reservation.user.id = :userId', { userId });
-      }
-  
-      if (equipmentId) {
-        query.andWhere('reservation.equipment.id = :equipmentId', { equipmentId });
-      }
-  
-      if (startDate) {
-        query.andWhere('reservation.startDate >= :startDate', { startDate });
-      }
-  
-      if (endDate) {
-        query.andWhere('reservation.endDate <= :endDate', { endDate });
-      }
-  
-      return query
-        .take(limit)
-        .skip(offset)
-        .orderBy('reservation.createdAt', 'DESC')
-        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating reservation');
     }
   }
-  
+
+  async findAll(pagination: PaginationDto): Promise<Reservation[]> {
+    const { limit = 10, offset = 0 } = pagination;
+    return this.reservationRepository.find({
+      take: limit,
+      skip: offset,
+      order: { createdAt: 'DESC' },
+      relations: ['equipment', 'user'],
+    });
+  }
+
+  async findOne(id: string): Promise<Reservation> {
+    const reservation = await this.reservationRepository.findOne({
+      where: { id },
+      relations: ['equipment', 'user'],
+    });
+
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with id ${id} not found`);
+    }
+
+    return reservation;
+  }
+
+  async update(id: string, dto: UpdateReservationDto): Promise<Reservation> {
+    const reservation = await this.findOne(id);
+
+    if (dto.equipmentId) {
+      const equipment = await this.reservationRepository.manager.findOne(Equipment, {
+        where: { id: dto.equipmentId },
+      });
+      if (!equipment) {
+        throw new NotFoundException(`Equipment with id ${dto.equipmentId} not found`);
+      }
+      reservation.equipment = equipment;
+    }
+
+    if (dto.userId) {
+      const user = await this.reservationRepository.manager.findOne(User, {
+        where: { id: dto.userId },
+      });
+      if (!user) {
+        throw new NotFoundException(`User with id ${dto.userId} not found`);
+      }
+      reservation.user = user;
+    }
+
+    if (dto.startDate) reservation.startDate = dto.startDate;
+    if (dto.endDate) reservation.endDate = dto.endDate;
+
+    try {
+      await this.reservationRepository.save(reservation);
+      return this.findOne(id);
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating reservation');
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    const reservation = await this.findOne(id);
+    try {
+      await this.reservationRepository.remove(reservation);
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting reservation');
+    }
+  }
+
+  async search(filters: SearchReservationDto): Promise<Reservation[]> {
+    const { userId, equipmentId, startDate, endDate, limit = 10, offset = 0 } = filters;
+
+    const query = this.reservationRepository.createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.user', 'user')
+      .leftJoinAndSelect('reservation.equipment', 'equipment');
+
+    if (userId) {
+      query.andWhere('user.id = :userId', { userId });
+    }
+
+    if (equipmentId) {
+      query.andWhere('equipment.id = :equipmentId', { equipmentId });
+    }
+
+    if (startDate) {
+      query.andWhere('reservation.startDate >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('reservation.endDate <= :endDate', { endDate });
+    }
+
+    return query
+      .take(limit)
+      .skip(offset)
+      .orderBy('reservation.createdAt', 'DESC')
+      .getMany();
+  }
+}
