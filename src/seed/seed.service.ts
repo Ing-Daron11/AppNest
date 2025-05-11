@@ -13,17 +13,17 @@ export class SeedService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     // Verificar si ya existen usuarios en la base de datos
-    const userCount = await this.userRepository.count();
-    if (userCount > 0) {
-      console.log('Usuarios ya existentes, no se ejecuta el seeder.');
+    const existingUser = await this.userRepository.findOneBy({ email: 'daron@gmail.com' });
+     if (existingUser) {
+      console.log('El admin ya existe, no se ejecuta el seeder.');
       return;
     }
 
     // Crear un usuario inicial con roles
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash('daron123', 10);
     const adminUser = this.userRepository.create({
-      name: 'Admin',
-      email: 'admin@gmail.com',
+      name: 'daron',
+      email: 'daron@gmail.com',
       password: hashedPassword,
       roles: ['admin'],
     });

@@ -16,15 +16,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET') as string | 'secret',
+      secretOrKey: configService.get<string>('JWT_SECRET') || 'secret',
     });
+    console.log('Validando con JWT_SECRET:', configService.get('JWT_SECRET'));
   }
 
   async validate(payload: any) {
     console.log('Payload recibido:', payload);
     const id = payload.user_id;
 
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOneBy({ id: payload.user_id });
     console.log('Usuario encontrado:', user);
 
     if (!user) throw new UnauthorizedException('invalid token');
