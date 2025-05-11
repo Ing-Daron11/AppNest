@@ -151,8 +151,9 @@ export class EquipmentController {
         status: 401,
         description: 'Unauthorized',
     })
+
     // @Auth(ValidRoles.admin, ValidRoles.technical)
-    updateStatus(
+    async updateStatus(
         @Param('id') id: string,
         @Body() status: UpdateEquipmentStatusDto,
     ): Promise<Equipment> {

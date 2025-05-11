@@ -98,7 +98,7 @@ describe('EquipmentController', () => {
     expect(result.status).toBe(EquipmentStatus.MAINTENANCE);
     expect(service.markInMaintenance).toHaveBeenCalledWith('uuid-1');
   });
-  
+
   it('should update status to RENTED', async () => {
     const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.RENTED });
     expect(result.status).toBe(EquipmentStatus.RENTED);
@@ -115,4 +115,43 @@ describe('EquipmentController', () => {
     expect(result.status).toBe(EquipmentStatus.RENTED);
     expect(service.markAsRented).toHaveBeenCalledWith('uuid-1');
   });
+
+  // sad paths
+  it('should throw when service.create fails', async () => {
+    jest.spyOn(service, 'create').mockRejectedValueOnce(new Error('Duplicate'));
+
+    await expect(
+      controller.create({
+        name: 'HP Laptop',
+        model: '840 G7',
+        description: 'desc',
+        category: EquipmentCategory.LAPTOP,
+      })
+    ).rejects.toThrow('Duplicate');
+  });
+
+  it('should throw when equipment not found in findOne', async () => {
+    jest.spyOn(service, 'findOne').mockRejectedValueOnce(new Error('Not found'));
+
+    await expect(controller.findOne('invalid-id')).rejects.toThrow('Not found');
+  });
+
+  it('should throw on update with invalid ID', async () => {
+    jest.spyOn(service, 'update').mockRejectedValueOnce(new Error('Update failed'));
+
+    await expect(controller.update('invalid-id', { name: 'X' } as any)).rejects.toThrow('Update failed');
+  });
+
+  it('should throw when remove fails', async () => {
+    jest.spyOn(service, 'remove').mockRejectedValueOnce(new Error('Delete failed'));
+
+    await expect(controller.remove('invalid-id')).rejects.toThrow('Delete failed');
+  });
+
+  it('should throw on updateStatus with invalid status', async () => {
+    await expect(
+      controller.updateStatus('uuid-1', { status: 'invalid' as EquipmentStatus })
+    ).rejects.toThrow('Invalid status');
+  });
+
 });
