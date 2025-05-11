@@ -13,6 +13,7 @@ import { EquipmentStatus } from './enums/equipment.enum';
 import { SearchEquipmentDto } from './dto/search-equipment.dto';
 import { UpdateBrandDto } from 'src/brands/dto/update-brand.dto';
 import { UpdateEquipmentStatusDto } from './dto/update-equipment-status.dto';
+import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 
 @Controller('equipment')
 export class EquipmentController {
@@ -104,7 +105,7 @@ export class EquipmentController {
         description: 'Unauthorized',
     })
     // @Auth(ValidRoles.admin)
-    update(@Param('id') id: string, @Body() dto: CreateEquipmentDto): Promise<Equipment> {
+    update(@Param('id') id: string, @Body() dto: UpdateEquipmentDto): Promise<Equipment> {
         try {
             return this.equipmentService.update(id, dto);
         } catch (error) {

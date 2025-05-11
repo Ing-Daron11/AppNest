@@ -3,6 +3,7 @@ import { EquipmentController } from './equipment.controller';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { EquipmentCategory, EquipmentStatus } from './enums/equipment.enum';
+import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 
 describe('EquipmentController', () => {
   let controller: EquipmentController;
@@ -74,9 +75,34 @@ describe('EquipmentController', () => {
   });
 
   it('should update equipment', async () => {
-    const dto: CreateEquipmentDto = { ...mockEquipment, name: 'Updated' };
+    const dto: UpdateEquipmentDto = { ...mockEquipment, name: 'Updated' };
     const result = await controller.update('uuid-1', dto);
     expect(result.name).toBe('Updated');
+  });
+
+  it('should search equipment', async () => {
+    const filters = { name: 'HP', category: EquipmentCategory.LAPTOP, status: EquipmentStatus.AVAILABLE };
+    const result = await controller.search(filters);
+    expect(result).toEqual([mockEquipment]);
+    expect(service.search).toHaveBeenCalledWith(filters);
+  });
+
+  it('should update status to AVAILABLE', async () => {
+    const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.AVAILABLE });
+    expect(result.status).toBe(EquipmentStatus.AVAILABLE);
+    expect(service.markAsAvailable).toHaveBeenCalledWith('uuid-1');
+  });
+
+  it('should update status to MAINTENANCE', async () => {
+    const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.MAINTENANCE });
+    expect(result.status).toBe(EquipmentStatus.MAINTENANCE);
+    expect(service.markInMaintenance).toHaveBeenCalledWith('uuid-1');
+  });
+  
+  it('should update status to RENTED', async () => {
+    const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.RENTED });
+    expect(result.status).toBe(EquipmentStatus.RENTED);
+    expect(service.markAsRented).toHaveBeenCalledWith('uuid-1');
   });
 
   it('should delete equipment', async () => {
