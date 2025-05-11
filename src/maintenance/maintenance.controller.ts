@@ -8,12 +8,15 @@ import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { UpdateMaintenanceDto } from './dto/update-maintenance.dto';
 import { SearchMaintenanceDto } from './dto/search-maintenance.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 
 @Controller('maintenance')
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @Post()
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 201,
     description: 'Maintenance record created successfully',
@@ -29,6 +32,7 @@ export class MaintenanceController {
   }
 
   @Get()
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 200,
     description: 'List of all maintenance records',
@@ -44,6 +48,7 @@ export class MaintenanceController {
   }
 
   @Get('search')
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 200,
     description: 'Search maintenance records by filters',
@@ -59,6 +64,7 @@ export class MaintenanceController {
   }
 
   @Get(':id')
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 200,
     description: 'Get maintenance record by ID',
@@ -73,6 +79,7 @@ export class MaintenanceController {
   }
 
   @Patch(':id')
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 200,
     description: 'Maintenance record updated successfully',
@@ -87,6 +94,7 @@ export class MaintenanceController {
   }
 
   @Delete(':id')
+  @Auth(ValidRoles.admin, ValidRoles.technical)
   @ApiResponse({
     status: 200,
     description: 'Maintenance record deleted successfully',

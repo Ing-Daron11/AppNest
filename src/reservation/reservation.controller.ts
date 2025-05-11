@@ -9,14 +9,13 @@ import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { SearchReservationDto } from './dto/search-reservation.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 
 @Controller('reservations')
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
   @Post()
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 201,
     description: 'Reservation created successfully',
@@ -32,7 +31,7 @@ export class ReservationController {
   }
 
   @Get()
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 200,
     description: 'List of all reservations',
@@ -48,7 +47,7 @@ export class ReservationController {
   }
 
   @Get('search')
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 200,
     description: 'Search reservation records by filters',
@@ -64,7 +63,7 @@ export class ReservationController {
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 200,
     description: 'Get reservation by ID',
@@ -79,7 +78,7 @@ export class ReservationController {
   }
 
   @Patch(':id')
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 200,
     description: 'Reservation updated successfully',
@@ -94,7 +93,7 @@ export class ReservationController {
   }
 
   @Delete(':id')
-  @Auth(ValidRoles.admin, ValidRoles.technical)
+  @Auth()
   @ApiResponse({
     status: 200,
     description: 'Reservation deleted successfully',
