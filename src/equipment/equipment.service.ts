@@ -114,7 +114,7 @@ export class EquipmentService {
             query.andWhere('equipment.status = :status', { status });
         }
 
-        query.skip(offset).take(limit).orderBy('equipment.addedAt', 'DESC');
+        query.skip(offset).take(limit).orderBy('equipment.createdAt', 'DESC');
 
         return query.getMany();
     }
