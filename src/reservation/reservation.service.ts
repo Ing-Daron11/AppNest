@@ -2,9 +2,10 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, Not } from 'typeorm';
 
 import { Reservation } from './entities/reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -24,10 +25,13 @@ export class ReservationService {
   async create(dto: CreateReservationDto): Promise<Reservation> {
     const { equipmentId, userId, startDate, endDate } = dto;
 
+    if (startDate >= endDate) {
+      throw new BadRequestException('Start date must be before end date');
+    }
+
     const equipment = await this.reservationRepository.manager.findOne(Equipment, {
       where: { id: equipmentId },
     });
-
     if (!equipment) {
       throw new NotFoundException(`Equipment with id ${equipmentId} not found`);
     }
@@ -35,9 +39,22 @@ export class ReservationService {
     const user = await this.reservationRepository.manager.findOne(User, {
       where: { id: userId },
     });
-
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    // Validar solapamiento
+    const overlapping = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .where('reservation.equipment.id = :equipmentId', { equipmentId })
+      .andWhere(
+        '(reservation.startDate < :endDate AND reservation.endDate > :startDate)',
+        { startDate, endDate },
+      )
+      .getOne();
+
+    if (overlapping) {
+      throw new BadRequestException('This equipment is already reserved during the selected time');
     }
 
     const reservation = this.reservationRepository.create({
@@ -49,7 +66,7 @@ export class ReservationService {
 
     try {
       await this.reservationRepository.save(reservation);
-      return reservation;
+      return this.findOne(reservation.id); // Retorna con relaciones
     } catch (error) {
       throw new InternalServerErrorException('Error creating reservation');
     }
@@ -81,6 +98,10 @@ export class ReservationService {
   async update(id: string, dto: UpdateReservationDto): Promise<Reservation> {
     const reservation = await this.findOne(id);
 
+    if (dto.startDate && dto.endDate && dto.startDate >= dto.endDate) {
+      throw new BadRequestException('Start date must be before end date');
+    }
+
     if (dto.equipmentId) {
       const equipment = await this.reservationRepository.manager.findOne(Equipment, {
         where: { id: dto.equipmentId },
@@ -103,6 +124,25 @@ export class ReservationService {
 
     if (dto.startDate) reservation.startDate = dto.startDate;
     if (dto.endDate) reservation.endDate = dto.endDate;
+
+    // Validar solapamiento en actualización
+    if (reservation.equipment && reservation.startDate && reservation.endDate) {
+      const overlapping = await this.reservationRepository
+        .createQueryBuilder('r')
+        .where('r.equipment.id = :equipmentId', {
+          equipmentId: reservation.equipment.id,
+        })
+        .andWhere(
+          '(r.startDate < :endDate AND r.endDate > :startDate)',
+          { startDate: reservation.startDate, endDate: reservation.endDate },
+        )
+        .andWhere('r.id != :id', { id })
+        .getOne();
+
+      if (overlapping) {
+        throw new BadRequestException('This equipment is already reserved during the selected time');
+      }
+    }
 
     try {
       await this.reservationRepository.save(reservation);
