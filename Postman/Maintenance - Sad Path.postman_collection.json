@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "a288ba47-38bf-4ebf-b137-a1940c26995d",
-		"name": "Sad Maintenance Module",
+		"name": "Maintenance - Sad Path",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "42130956"
 	},
@@ -128,6 +128,44 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\r\n  \"equipmentId\": \"0ae00a7b-aed9-4dcd-8678-21b8d6678999\",\r\n  \"technicianId\": \"b8a71dac-1a22-4d75-942d-2cc0132607ba\",\r\n  \"description\": \"\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/maintenance",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"maintenance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Maintenance With A Non-Technical User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmZjNTE1YTMtOTczZi00MjVhLThmMTMtMGIxMWNlNTUwMmIzIiwiaWF0IjoxNzQ3MDA0MTQxLCJleHAiOjE3NDcwMDQ4NjF9.17aiqkiBmcvcEICZtdCbZrulHvyUA5CGN2VqkQtjdMI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"equipmentId\": \"46a623dd-61cc-4591-96d1-0105bfa2a3bb\",\r\n  \"technicianId\": \"402cf1d4-3a4d-414f-8894-83118896bcb2\",\r\n  \"description\": \"Revisión del sistema de refrigeración\"\r\n}\r\n",
 					"options": {
 						"raw": {
 							"language": "json"
