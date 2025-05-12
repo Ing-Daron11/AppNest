@@ -29,28 +29,29 @@ export class MaintenanceService {
   ) {}
 
   async create(dto: CreateMaintenanceDto): Promise<Maintenance> {
+    const equipment = await this.equipmentRepository.findOneBy({ id: dto.equipmentId });
+    if (!equipment) {
+      throw new NotFoundException(`Equipment with id ${dto.equipmentId} not found`);
+    }
+
+    const technician = await this.userRepository.findOneBy({ id: dto.technicianId });
+    if (!technician) {
+      throw new NotFoundException(`Technician with id ${dto.technicianId} not found`);
+    }
+
+    if (!technician.roles.includes('technical')) {
+      throw new BadRequestException(
+        `User with id ${dto.technicianId} does not have the 'technical' role`,
+      );
+    }
+
+    const maintenance = this.maintenanceRepository.create({
+      equipment,
+      technician,
+      description: dto.description,
+    });
+
     try {
-      const equipment = await this.equipmentRepository.findOneBy({ id: dto.equipmentId });
-      if (!equipment) {
-        throw new NotFoundException(`Equipment with id ${dto.equipmentId} not found`);
-      }
-
-      const technician = await this.userRepository.findOneBy({ id: dto.technicianId });
-      if (!technician) {
-        throw new NotFoundException(`Technician with id ${dto.technicianId} not found`);
-      }
-
-      // ✅ Validar que el usuario tenga el rol "technical"
-      if (!technician.roles.includes('technical')) {
-        throw new BadRequestException(`User with id ${dto.technicianId} does not have the 'technical' role`);
-      }
-
-      const maintenance = this.maintenanceRepository.create({
-        equipment,
-        technician,
-        description: dto.description,
-      });
-
       return await this.maintenanceRepository.save(maintenance);
     } catch (error) {
       throw new InternalServerErrorException(`Error creating maintenance: ${error.message}`);
@@ -59,16 +60,12 @@ export class MaintenanceService {
 
   async findAll(pagination: PaginationDto): Promise<Maintenance[]> {
     const { limit = 10, offset = 0 } = pagination;
-    try {
-      return await this.maintenanceRepository.find({
-        take: limit,
-        skip: offset,
-        order: { date: 'DESC' },
-        relations: ['equipment', 'technician'],
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(`Error fetching maintenances: ${error.message}`);
-    }
+    return this.maintenanceRepository.find({
+      take: limit,
+      skip: offset,
+      order: { date: 'DESC' },
+      relations: ['equipment', 'technician'],
+    });
   }
 
   async findOne(id: string): Promise<Maintenance> {
@@ -76,9 +73,11 @@ export class MaintenanceService {
       where: { id },
       relations: ['equipment', 'technician'],
     });
+
     if (!maintenance) {
       throw new NotFoundException(`Maintenance with id ${id} not found`);
     }
+
     return maintenance;
   }
 
@@ -95,16 +94,17 @@ export class MaintenanceService {
     try {
       return await this.maintenanceRepository.save(maintenance);
     } catch (error) {
-      throw new InternalServerErrorException('Error updating maintenance');
+      throw new InternalServerErrorException(`Error updating maintenance: ${error.message}`);
     }
   }
 
   async remove(id: string): Promise<void> {
     const maintenance = await this.findOne(id);
+
     try {
       await this.maintenanceRepository.remove(maintenance);
     } catch (error) {
-      throw new InternalServerErrorException('Error deleting maintenance');
+      throw new InternalServerErrorException(`Error deleting maintenance: ${error.message}`);
     }
   }
 
@@ -134,7 +134,7 @@ export class MaintenanceService {
     try {
       return await query.getMany();
     } catch (error) {
-      throw new InternalServerErrorException('Error searching maintenances');
+      throw new InternalServerErrorException(`Error searching maintenances: ${error.message}`);
     }
   }
 }
