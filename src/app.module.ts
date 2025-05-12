@@ -22,7 +22,7 @@ import { UsersModule } from './users/users.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: true, // Note: Only use this in development
+      synchronize: false, // Note: Only use this in development
       autoLoadEntities: true,
     }),
     AuthModule,
