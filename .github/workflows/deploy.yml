@@ -9,6 +9,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: equiprent_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_pass
+      DB_NAME: test_db
+      JWT_SECRET: test_secret_key
+      JWT_EXPIRES_IN: 1h
+      PORT: 3000
+
+
     steps:
       - uses: actions/checkout@v3
 
@@ -20,15 +46,11 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      # - name: Run tests 2e2
-      #   run: yarn test:e2e -- test/maintenance/maintenance.e2e-spec.ts
-
-
-      - name: run test 2 e2e
-        run: yarn test:e2e -- test/users/users.e2e-spec.ts
-
       - name: Run unit tests
         run: yarn test
+
+      - name: Run e2e tests
+        run: yarn test:e2e -- test/users/users.e2e-spec.ts
 
       - name: Deploy to Railway
         run: |
