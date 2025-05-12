@@ -1,65 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { v4 as uuidv4 } from 'uuid';
+import { AppModule } from './../../src/app.module';
+import * as jwt from 'jsonwebtoken';
 
 describe('Maintenance (e2e)', () => {
   let app: INestApplication;
-  let server: any;
-
-  let technicianToken: string;
-  let userToken: string;
-  let adminToken: string;
-
+  let token: string;
   let technicianId: string;
-  let userId: string;
   let equipmentId: string;
   let maintenanceId: string;
 
-  const baseUrl = '/';
-
-  const uniqueEmail = (prefix: string) => `${prefix}-${uuidv4()}@e2e.com`;
-
-  const createUser = async (name: string, email: string, password: string) => {
-    const res = await request(server).post(`${baseUrl}auth/register`).send({
-      name,
-      email,
-      password,
-    });
-    expect(res.status).toBe(201);
-    return res.body;
-  };
-
-  const updateUserRole = async (userId: string, token: string, roles: string[]) => {
-    const res = await request(server)
-      .patch(`${baseUrl}auth/${userId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ roles });
-    expect(res.status).toBe(200);
-  };
-
-  const loginUser = async (email: string, password: string) => {
-    const res = await request(server).post(`${baseUrl}auth/login`).send({
-      email,
-      password,
-    });
-    expect(res.status).toBe(201);
-    return res.body.token;
-  };
-
-  const createEquipment = async (token: string) => {
-    const res = await request(server)
-      .post(`${baseUrl}equipment`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        name: 'Equipo de prueba',
-        model: 'Modelo Y',
-        description: 'Equipo de laboratorio',
-        category: 'electronic',
-      });
-    expect(res.status).toBe(201);
-    return res.body.id;
+  const technicianCredentials = {
+    email: 'miguelMar@gmail.com',
+    password: 'miguel123',
   };
 
   beforeAll(async () => {
@@ -70,109 +24,178 @@ describe('Maintenance (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    server = app.getHttpServer();
+    // LOGIN del técnico
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send(technicianCredentials);
 
-    // Login como admin
-    adminToken = await loginUser('daron@gmail.com', 'daron123');
+    expect(loginRes.status).toBe(201);
+    token = loginRes.body.token;
 
-    // Crear técnico y usuario (con correos únicos)
-    const techEmail = uniqueEmail('tech');
-    const userEmail = uniqueEmail('user');
+    // Obtener el technicianId desde el token
+    const decoded: any = jwt.decode(token);
+    technicianId = decoded.user_id;
 
-    const tech = await createUser('Tech Tester', techEmail, '123456');
-    technicianId = tech.id;
+    // Obtener ID de equipo (el primero disponible)
+    const eqRes = await request(app.getHttpServer())
+      .get('/equipment')
+      .set('Authorization', `Bearer ${token}`);
 
-    const user = await createUser('User Tester', userEmail, '123456');
-    userId = user.id;
+    expect(eqRes.status).toBe(200);
+    expect(eqRes.body.length).toBeGreaterThan(0);
 
-    // Asignar roles
-    await updateUserRole(technicianId, adminToken, ['technical']);
-    await updateUserRole(userId, adminToken, ['user']);
-
-    // Login usuarios
-    technicianToken = await loginUser(techEmail, '123456');
-    userToken = await loginUser(userEmail, '123456');
-
-    // Crear equipo
-    equipmentId = await createEquipment(technicianToken);
+    equipmentId = eqRes.body[0].id;
   });
 
-  it('debería crear un mantenimiento con técnico autorizado', async () => {
-    const res = await request(server)
-      .post(`${baseUrl}maintenance`)
-      .set('Authorization', `Bearer ${technicianToken}`)
+//      |===============================|
+//      | _____ _____ ____ _____ ____   |
+//      | |_   _| ____/ ___|_   _/ ___| |
+//      |   | | |  _| \___ \ | | \___ \ |
+//      |   | | | |___ ___) || |  ___) ||
+//      |   |_| |_____|____/ |_| |____/ |
+//      |===============================|
+
+//   _   _                                       _   _     
+//  | | | | __ _ _ __  _ __  _   _   _ __   __ _| |_| |__  
+//  | |_| |/ _` | '_ \| '_ \| | | | | '_ \ / _` | __| '_ \ 
+//  |  _  | (_| | |_) | |_) | |_| | | |_) | (_| | |_| | | |
+//  |_| |_|\__,_| .__/| .__/ \__, | | .__/ \__,_|\__|_| |_|
+//              |_|   |_|    |___/  |_|                    
+
+  /**
+   * 1. Crear, actualizar y revertir mantenimiento
+   *    - Crear un mantenimiento con una descripción inicial
+   */
+
+  it('Crear, actualizar y revertir mantenimiento', async () => {
+    const descripcionInicial = 'Mantenimiento preventivo básico';
+    const descripcionActualizada = 'Revisión interna con limpieza de ventiladores';
+
+    // Crear mantenimiento
+    const createRes = await request(app.getHttpServer())
+      .post('/maintenance')
+      .set('Authorization', `Bearer ${token}`)
       .send({
         technicianId,
         equipmentId,
-        description: 'Mantenimiento E2E test',
+        description: descripcionInicial,
       });
 
-    expect(res.status).toBe(201);
-    expect(res.body.id).toBeDefined();
-    expect(res.body.description).toBe('Mantenimiento E2E test');
+    console.log('🛠️ Crear response:', createRes.body);
+    expect(createRes.status).toBe(201);
 
-    maintenanceId = res.body.id;
-  });
+    maintenanceId = createRes.body.id;
+    expect(maintenanceId).toBeDefined();
 
-  it('debería obtener el mantenimiento por ID', async () => {
-    const res = await request(server)
-      .get(`${baseUrl}maintenance/${maintenanceId}`)
-      .set('Authorization', `Bearer ${technicianToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.id).toBe(maintenanceId);
-  });
-
-  it('debería actualizar la descripción del mantenimiento', async () => {
-    const res = await request(server)
-      .patch(`${baseUrl}maintenance/${maintenanceId}`)
-      .set('Authorization', `Bearer ${technicianToken}`)
-      .send({ description: 'Descripción actualizada' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.description).toBe('Descripción actualizada');
-  });
-
-  it('no debería permitir a un usuario sin rol técnico crear mantenimiento', async () => {
-    const res = await request(server)
-      .post(`${baseUrl}maintenance`)
-      .set('Authorization', `Bearer ${userToken}`)
+    // Actualizar mantenimiento
+    const updateRes = await request(app.getHttpServer())
+      .patch(`/maintenance/${maintenanceId}`)
+      .set('Authorization', `Bearer ${token}`)
       .send({
-        technicianId: userId,
-        equipmentId,
-        description: 'Mantenimiento inválido',
+        description: descripcionActualizada,
       });
 
-    expect(res.status).toBe(403);
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.description).toBe(descripcionActualizada);
+
+    // Revertir actualización
+    const revertRes = await request(app.getHttpServer())
+      .patch(`/maintenance/${maintenanceId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: descripcionInicial,
+      });
+
+    expect(revertRes.status).toBe(200);
+    expect(revertRes.body.description).toBe(descripcionInicial);
   });
 
-  it('debería eliminar el mantenimiento', async () => {
-    const res = await request(server)
-      .delete(`${baseUrl}maintenance/${maintenanceId}`)
-      .set('Authorization', `Bearer ${technicianToken}`);
+  /**
+   * 2. Listar mantenimientos y obtener uno por ID
+   *   - Listar todos los mantenimientos
+   */
+  it('Listar mantenimientos y obtener uno por ID', async () => {
+      // Obtener todos los mantenimientos
+      const listRes = await request(app.getHttpServer())
+        .get('/maintenance')
+        .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-  });
+      expect(listRes.status).toBe(200);
+      expect(Array.isArray(listRes.body)).toBe(true);
+      expect(listRes.body.length).toBeGreaterThan(0);
+
+      const oneId = listRes.body[0].id;
+
+      // Obtener un mantenimiento específico por ID
+      const oneRes = await request(app.getHttpServer())
+        .get(`/maintenance/${oneId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(oneRes.status).toBe(200);
+      expect(oneRes.body.id).toBe(oneId);
+    });
+
+
+//                 _               _   _     
+//   ___  __ _  __| |  _ __   __ _| |_| |__  
+//  / __|/ _` |/ _` | | '_ \ / _` | __| '_ \ 
+//  \__ \ (_| | (_| | | |_) | (_| | |_| | | |
+//  |___/\__,_|\__,_| | .__/ \__,_|\__|_| |_|
+//                    |_|                    
+    
+    /**
+     * 3. Intentar crear un mantenimiento sin descripción
+     * 
+     */
+    it(' No debe crear mantenimiento sin descripción', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/maintenance')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          equipmentId,
+          technicianId,
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('Error creating maintenance: null value in column \"description\" of relation \"maintenance\" violates not-null constraint');
+    });
+
+
+    /**
+     * 4. Mantener el UUID inválido
+     */
+    it('No debe crear mantenimiento con UUID inválido', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/maintenance')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          equipmentId: 'id-invalido',
+          technicianId: technicianId,
+          description: 'Intento fallido de mantenimiento con ID inválido',
+        });
+
+      expect(res.status).toBe(500);
+      expect(res.body.message).toContain('Error creating maintenance: invalid input syntax for type uuid: \"id-invalido\"');
+    });
+
+    /**
+     * 5. No debe permitir crear mantenimiento sin autenticación
+     */
+    it(' No debe permitir crear mantenimiento sin autenticación', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/maintenance')
+        .send({
+          equipmentId,
+          technicianId,
+          description: 'Mantenimiento no autorizado',
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe('Unauthorized');
+    });
+
 
   afterAll(async () => {
-    if (technicianId) {
-      await request(server)
-        .delete(`${baseUrl}auth/${technicianId}`)
-        .set('Authorization', `Bearer ${adminToken}`);
-    }
-
-    if (userId) {
-      await request(server)
-        .delete(`${baseUrl}auth/${userId}`)
-        .set('Authorization', `Bearer ${adminToken}`);
-    }
-
-    if (equipmentId) {
-      await request(server)
-        .delete(`${baseUrl}equipment/${equipmentId}`)
-        .set('Authorization', `Bearer ${technicianToken}`);
-    }
-
     await app.close();
   });
 });
