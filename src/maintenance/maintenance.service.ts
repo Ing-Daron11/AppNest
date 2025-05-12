@@ -2,9 +2,10 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Maintenance } from './entities/maintenance.entity';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
@@ -30,14 +31,18 @@ export class MaintenanceService {
   async create(dto: CreateMaintenanceDto): Promise<Maintenance> {
     try {
       const equipment = await this.equipmentRepository.findOneBy({ id: dto.equipmentId });
-      const technician = await this.userRepository.findOneBy({ id: dto.technicianId });
-
       if (!equipment) {
         throw new NotFoundException(`Equipment with id ${dto.equipmentId} not found`);
       }
 
+      const technician = await this.userRepository.findOneBy({ id: dto.technicianId });
       if (!technician) {
         throw new NotFoundException(`Technician with id ${dto.technicianId} not found`);
+      }
+
+      // ✅ Validar que el usuario tenga el rol "technical"
+      if (!technician.roles.includes('technical')) {
+        throw new BadRequestException(`User with id ${dto.technicianId} does not have the 'technical' role`);
       }
 
       const maintenance = this.maintenanceRepository.create({
@@ -59,6 +64,7 @@ export class MaintenanceService {
         take: limit,
         skip: offset,
         order: { date: 'DESC' },
+        relations: ['equipment', 'technician'],
       });
     } catch (error) {
       throw new InternalServerErrorException(`Error fetching maintenances: ${error.message}`);
@@ -66,7 +72,10 @@ export class MaintenanceService {
   }
 
   async findOne(id: string): Promise<Maintenance> {
-    const maintenance = await this.maintenanceRepository.findOneBy({ id });
+    const maintenance = await this.maintenanceRepository.findOne({
+      where: { id },
+      relations: ['equipment', 'technician'],
+    });
     if (!maintenance) {
       throw new NotFoundException(`Maintenance with id ${id} not found`);
     }
