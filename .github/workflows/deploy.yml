@@ -49,8 +49,11 @@ jobs:
       - name: Run unit tests
         run: yarn test
 
-      - name: Run e2e tests
+      - name: Run e2e tests users
         run: yarn test:e2e -- test/users/users.e2e-spec.ts
+
+      - name: Run e2e tests equipment
+        run: yarn test:e2e -- test/equipment/equipment.e2e-spec.ts
 
       - name: Deploy to Railway
         run: |
