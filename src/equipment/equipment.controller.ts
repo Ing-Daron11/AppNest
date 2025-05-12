@@ -20,7 +20,6 @@ export class EquipmentController {
     constructor(private readonly equipmentService: EquipmentService) { }
 
     @Post()
-    // @ApiBearerAuth('JWT-auth')
     @ApiResponse({
         status: 201,
         description: 'Equipment created successfully',
@@ -34,7 +33,7 @@ export class EquipmentController {
         status: 401,
         description: 'Unauthorized',
     })
-    // @Auth(ValidRoles.admin)
+    @Auth(ValidRoles.admin)
     create(@Body() equipmentDto: CreateEquipmentDto): Promise<Equipment> {
         try {
             return this.equipmentService.create(equipmentDto);
@@ -103,7 +102,7 @@ export class EquipmentController {
         status: 401,
         description: 'Unauthorized',
     })
-    // @Auth(ValidRoles.admin)
+    @Auth(ValidRoles.admin)
     update(@Param('id') id: string, @Body() dto: UpdateEquipmentDto): Promise<Equipment> {
         try {
             return this.equipmentService.update(id, dto);
@@ -126,10 +125,17 @@ export class EquipmentController {
         status: 401,
         description: 'Unauthorized',
     })
-    // @Auth(ValidRoles.admin)
-    remove(@Param('id') id: string): Promise<void> {
+    @Auth(ValidRoles.admin)
+    async remove(@Param('id') id: string): Promise<{ message: string; equipmentId: string }> {
         try {
-            return this.equipmentService.remove(id);
+            const equipment = await this.equipmentService.findOne(id);
+
+            await this.equipmentService.remove(id);
+
+            return {
+                message: `Equipment with ID ${id} was deleted successfully`,
+                equipmentId: id
+            };
         } catch (error) {
             throw new BadRequestException(error.message);
         }
@@ -151,7 +157,7 @@ export class EquipmentController {
         description: 'Unauthorized',
     })
 
-    // @Auth(ValidRoles.admin, ValidRoles.technical)
+    @Auth(ValidRoles.admin, ValidRoles.technical)
     async updateStatus(
         @Param('id') id: string,
         @Body() status: UpdateEquipmentStatusDto,
