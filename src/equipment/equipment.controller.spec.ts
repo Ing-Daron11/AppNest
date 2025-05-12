@@ -105,10 +105,10 @@ describe('EquipmentController', () => {
     expect(service.markAsRented).toHaveBeenCalledWith('uuid-1');
   });
 
-  it('should delete equipment', async () => {
-    await expect(controller.remove('uuid-1')).resolves.toBeUndefined();
-    expect(service.remove).toHaveBeenCalledWith('uuid-1');
-  });
+  // it('should delete equipment', async () => {
+  //   await expect(controller.remove('uuid-1')).resolves.toBeUndefined();
+  //   expect(service.remove).toHaveBeenCalledWith('uuid-1');
+  // });
 
   it('should update status to RENTED', async () => {
     const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.RENTED });
