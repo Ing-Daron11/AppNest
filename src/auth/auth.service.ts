@@ -41,9 +41,9 @@ export class AuthService {
       user_id: user.id,
       roles: user.roles,
     };
-    console.log('JWT secret en uso:', this.jwtService.sign({ user_id: user.id }));
-    console.log('Token generado con:', payload);
-    console.log('Expira en:', process.env.JWT_EXPIRES_IN || 'default');
+    // console.log('JWT secret en uso:', this.jwtService.sign({ user_id: user.id }));
+    // console.log('Token generado con:', payload);
+    // console.log('Expira en:', process.env.JWT_EXPIRES_IN || 'default');
 
 
     return {
