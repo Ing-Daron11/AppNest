@@ -21,10 +21,11 @@ jobs:
         run: yarn install
 
       - name: Run tests 2e2
-        run: yarn jest test/maintenance/maintenance.e2e-spec.ts
+        run: yarn test:e2e -- test/maintenance/maintenance.e2e-spec.ts
+
 
       - name: run test 2 e2e
-        run: yarn test:e2e test/users/users.e2e-spec.ts
+        run: yarn test:e2e -- test/users/users.e2e-spec.ts
 
       - name: Run unit tests
         run: yarn test
