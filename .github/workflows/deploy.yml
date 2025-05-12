@@ -24,8 +24,8 @@ jobs:
       #   run: yarn test:e2e -- test/maintenance/maintenance.e2e-spec.ts
 
 
-      # - name: run test 2 e2e
-      #   run: yarn test:e2e -- test/users/users.e2e-spec.ts
+      - name: run test 2 e2e
+        run: yarn test:e2e -- test/users/users.e2e-spec.ts
 
       - name: Run unit tests
         run: yarn test
