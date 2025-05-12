@@ -14,5 +14,6 @@ export enum EquipmentCategory {
     ROUTER = 'router',
     PROJECTOR = 'projector',
     MICROPHONE = 'microphone',
+    CAMERA = 'camera',
     OTHER = 'other',
 }
