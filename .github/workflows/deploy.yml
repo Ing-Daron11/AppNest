@@ -1,4 +1,4 @@
-name: Run Tests and Deploy
+name: Deploy
 
 on:
   push:
@@ -6,28 +6,30 @@ on:
       - main
 
 jobs:
-  test-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install Node
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: yarn install
 
-      - name: Run tests
+      - name: Run tests 2e2
+        run: yarn jest test/maintenance/maintenance.e2e-spec.ts
+
+      - name: run test 2 e2e
+        run: yarn test:e2e test/users/users.e2e-spec.ts
+
+      - name: Run unit tests
         run: yarn test
 
-      - name: Build project
-        run: yarn build
-
       - name: Deploy to Railway
-        uses: railwayapp/cli-action@v1
-        with:
-          railwayToken: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          curl -fsSL https://railway.app/new/project/deploy \
+          -H "Authorization: ${{ secrets.RAILWAY_TOKEN }}"

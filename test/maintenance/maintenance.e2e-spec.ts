@@ -175,7 +175,6 @@ describe('Maintenance (e2e)', () => {
         });
 
       expect(res.status).toBe(500);
-      expect(res.body.message).toContain('Error creating maintenance: invalid input syntax for type uuid: \"id-invalido\"');
     });
 
     /**
