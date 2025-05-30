@@ -27,6 +27,7 @@ export class SeedService implements OnApplicationBootstrap {
       password: hashedPassword,
       roles: ['admin'],
     });
+    
 
     await this.userRepository.save(adminUser);
     console.log('Usuario administrador creado.');

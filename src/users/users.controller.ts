@@ -13,14 +13,14 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @Auth()
+  @Auth(ValidRoles.admin)
   getProfile(@GetUser() user: User) {
     console.log('Usuario autenticado:', user);
     return this.usersService.getProfile(user.id);
   }
     
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.technical, ValidRoles.admin)
   findAll() {
     return this.usersService.findAll();
   }
