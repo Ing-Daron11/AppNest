@@ -27,16 +27,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-    async loginUser(@Body() loginUserDto: LoginUserDto, @Res({ passthrough: true }) res: Response) {
-      const { token } = await this.authService.loginUser(loginUserDto);
+    async loginUser(
+      @Body() loginUserDto: LoginUserDto,
+      @Res({ passthrough: true }) res: Response
+    ) {
+      const loginResult = await this.authService.loginUser(loginUserDto);
 
-      res.cookie('token', token, {
-        httpOnly: false,        
-        secure: true,           // para que funcione en producción (https)
-        sameSite: 'none',       // para que funcione entre dominios (localhost + railway)
+      res.cookie('token', loginResult.token, {
+        httpOnly: false,         // o true si no necesitas acceder desde JS
+        secure: true,            // obligatorio en producción (HTTPS)
+        sameSite: 'none',        // para que funcione entre Railway + localhost
       });
-    return this.authService.loginUser(loginUserDto);
+
+    return loginResult;
   }
+
 
   @Post('register')
   createUser(@Body() createUserDto: CreateUserDto) {
