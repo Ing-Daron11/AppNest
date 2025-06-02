@@ -172,17 +172,19 @@ export class EquipmentController {
         @GetUser() user: User,
     ): Promise<Equipment> {
         const { status: newStatus } = status;
-
+        
         switch (newStatus) {
             case EquipmentStatus.AVAILABLE:
                 return this.equipmentService.markAsAvailable(id);
             case EquipmentStatus.RENTED:
-                return this.equipmentService.markAsRented(id);
+                return this.equipmentService.markAsRented(id, user);
             case EquipmentStatus.MAINTENANCE:
                 return this.equipmentService.markInMaintenance(id);
             default:
                 throw new BadRequestException(`Invalid status: ${newStatus}`);
         }
+
+        
     }
 
 }

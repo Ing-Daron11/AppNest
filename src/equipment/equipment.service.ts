@@ -173,7 +173,7 @@ export class EquipmentService {
     }
 
 
-    async markAsRented(id: string, user: User): Promise<Equipment> {
+    async markAsRented(id: string, user?: User): Promise<Equipment> {
         return this.updateStatus(id, EquipmentStatus.RENTED, user);
     }
 
