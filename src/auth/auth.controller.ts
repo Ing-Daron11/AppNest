@@ -8,7 +8,9 @@ import {
   Request,
   Req,
   Param,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -25,7 +27,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  loginUser(@Body() loginUserDto: LoginUserDto) {
+    async loginUser(@Body() loginUserDto: LoginUserDto, @Res({ passthrough: true }) res: Response) {
+      const { token } = await this.authService.loginUser(loginUserDto);
+
+      res.cookie('token', token, {
+        httpOnly: false,        
+        secure: true,           // para que funcione en producción (https)
+        sameSite: 'none',       // para que funcione entre dominios (localhost + railway)
+      });
     return this.authService.loginUser(loginUserDto);
   }
 
