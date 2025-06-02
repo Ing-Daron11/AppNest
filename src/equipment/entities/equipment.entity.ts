@@ -1,5 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { EquipmentCategory, EquipmentStatus } from '../enums/equipment.enum';
+import { User } from 'src/auth/entities/user.entity';
+import { ManyToOne } from 'typeorm';
 
 @Entity()
 export class Equipment {
@@ -23,4 +25,7 @@ export class Equipment {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
+
+    @ManyToOne(() => User, (user) => user.equipment, { eager: true })
+    user: User;
 }

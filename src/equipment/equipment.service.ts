@@ -9,6 +9,7 @@ import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { SearchEquipmentDto } from './dto/search-equipment.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { EquipmentStatus } from './enums/equipment.enum';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class EquipmentService {
@@ -125,6 +126,7 @@ export class EquipmentService {
     private async updateStatus(
         id: string,
         newStatus: EquipmentStatus,
+        user?: User,
     ): Promise<Equipment> {
         const equipment = await this.findOne(id);
         const currentStatus = equipment.status;
@@ -150,6 +152,10 @@ export class EquipmentService {
 
         equipment.status = newStatus;
 
+        if (user) {
+            equipment.user = user; // ← asociar el usuario si se provee
+        }
+
         try {
             return await this.equipmentRepository.save(equipment);
         } catch (error) {
@@ -157,9 +163,18 @@ export class EquipmentService {
         }
     }
 
+    async findRentedByUser(userId: string): Promise<Equipment[]> {
+        return this.equipmentRepository
+            .createQueryBuilder('equipment')
+            .leftJoinAndSelect('equipment.user', 'user')
+            .where('equipment.status = :status', { status: EquipmentStatus.RENTED })
+            .andWhere('user.id = :userId', { userId })
+            .getMany();
+    }
 
-    async markAsRented(id: string): Promise<Equipment> {
-        return this.updateStatus(id, EquipmentStatus.RENTED);
+
+    async markAsRented(id: string, user: User): Promise<Equipment> {
+        return this.updateStatus(id, EquipmentStatus.RENTED, user);
     }
 
     async markAsAvailable(id: string): Promise<Equipment> {

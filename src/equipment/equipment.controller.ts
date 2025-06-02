@@ -13,6 +13,8 @@ import { EquipmentStatus } from './enums/equipment.enum';
 import { SearchEquipmentDto } from './dto/search-equipment.dto';
 import { UpdateEquipmentStatusDto } from './dto/update-equipment-status.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/auth/entities/user.entity';
 
 @Controller('equipment')
 export class EquipmentController {
@@ -57,6 +59,12 @@ export class EquipmentController {
         }
     }
 
+    // GET /equipment/rented
+    @Get('rented')
+    @Auth()
+    async findRentedByUser(@GetUser() user: User): Promise<Equipment[]> {
+        return this.equipmentService.findRentedByUser(user.id);
+    }
 
 
     @Get('search')
@@ -161,6 +169,7 @@ export class EquipmentController {
     async updateStatus(
         @Param('id') id: string,
         @Body() status: UpdateEquipmentStatusDto,
+        @GetUser() user: User,
     ): Promise<Equipment> {
         const { status: newStatus } = status;
 
@@ -177,3 +186,4 @@ export class EquipmentController {
     }
 
 }
+

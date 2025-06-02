@@ -1,4 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { OneToMany } from 'typeorm';
+import { Equipment } from 'src/equipment/entities/equipment.entity';
+
 
 @Entity()
 export class User {
@@ -19,4 +22,8 @@ export class User {
 
   @Column('bool', { default: true })
   isActive: boolean;
+
+  @OneToMany(() => Equipment, (equipment) => equipment.user)
+  equipment: Equipment[];
+
 }
