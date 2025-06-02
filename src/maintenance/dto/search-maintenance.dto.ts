@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsUUID, IsDate, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SearchMaintenanceDto {
@@ -35,4 +35,12 @@ export class SearchMaintenanceDto {
   @IsOptional()
   @Type(() => Number)
   readonly offset?: number;
+
+  @IsOptional()
+  @IsString()
+  readonly sortBy?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  readonly sortOrder?: 'asc' | 'desc';
 }
