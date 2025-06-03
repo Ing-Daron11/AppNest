@@ -40,18 +40,23 @@ export class SearchMaintenanceDto {
   @IsIn(['asc', 'desc'])
   readonly sortOrder?: 'asc' | 'desc';
 
-  // Permite que 'search' o 'term' se transformen en 'description'
+  /**
+   * Campo principal de búsqueda, que puede venir como 'description', 'term' o 'search'.
+   * Esta propiedad es la que debe usarse dentro del service para hacer el filtro real.
+   */
   @IsOptional()
   @Transform(({ obj }) => obj.term ?? obj.search ?? obj.description ?? undefined)
   @IsString()
   readonly description?: string;
 
-  // Se incluye para evitar errores de validación si llega 'term'
+  /**
+   * Estos se mantienen solo para permitir su uso desde el frontend
+   * sin causar errores de validación, pero no deben usarse directamente.
+   */
   @IsOptional()
   @IsString()
   readonly term?: string;
 
-  // También se permite 'search' explícitamente
   @IsOptional()
   @IsString()
   readonly search?: string;
