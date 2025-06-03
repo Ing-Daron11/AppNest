@@ -60,6 +60,7 @@ export class MaintenanceService {
 
   async findAll(pagination: PaginationDto): Promise<Maintenance[]> {
     const { limit = 10, offset = 0 } = pagination;
+
     return this.maintenanceRepository.find({
       take: limit,
       skip: offset,
@@ -126,7 +127,7 @@ export class MaintenanceService {
       .leftJoinAndSelect('maintenance.equipment', 'equipment')
       .leftJoinAndSelect('maintenance.technician', 'technician');
 
-    // Búsqueda general por descripción o nombre del equipo
+    // Filtro por búsqueda general
     if (description) {
       query.andWhere(
         '(maintenance.description ILIKE :term OR equipment.name ILIKE :term)',
@@ -156,10 +157,20 @@ export class MaintenanceService {
       query.andWhere('maintenance.date <= :endDate', { endDate });
     }
 
+    // Validar columnas permitidas para evitar SQL Injection en sortBy
+    const allowedSortFields = [
+      'maintenance.date',
+      'maintenance.description',
+      'equipment.name',
+      'technician.name',
+    ];
+    const orderField = allowedSortFields.includes(sortBy) ? sortBy : 'maintenance.date';
+    const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     query
+      .orderBy(orderField, orderDirection)
       .skip(offset)
-      .take(limit)
-      .orderBy(sortBy, (sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'));
+      .take(limit);
 
     try {
       return await query.getMany();
