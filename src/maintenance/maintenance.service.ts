@@ -109,7 +109,19 @@ export class MaintenanceService {
   }
 
   async search(filters: SearchMaintenanceDto): Promise<Maintenance[]> {
-    const { description, equipmentId, technicianId, limit = 10, offset = 0 } = filters;
+    const {
+      description,
+      equipmentId,
+      technicianId,
+      equipmentName,
+      startDate,
+      endDate,
+      limit = 10,
+      offset = 0,
+      sortBy = 'maintenance.date',
+      sortOrder = 'DESC',
+      search,
+    } = filters;
 
     const query = this.maintenanceRepository.createQueryBuilder('maintenance')
       .leftJoinAndSelect('maintenance.equipment', 'equipment')
@@ -129,7 +141,28 @@ export class MaintenanceService {
       query.andWhere('technician.id = :technicianId', { technicianId });
     }
 
-    query.skip(offset).take(limit).orderBy('maintenance.date', 'DESC');
+    if (equipmentName) {
+      query.andWhere('equipment.name ILIKE :equipmentName', {
+        equipmentName: `%${equipmentName}%`,
+      });
+    }
+
+    if (startDate) {
+      query.andWhere('maintenance.date >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('maintenance.date <= :endDate', { endDate });
+    }
+
+    if (search) {
+      query.andWhere(
+        '(maintenance.description ILIKE :search OR equipment.name ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    query.skip(offset).take(limit).orderBy(sortBy, sortOrder.toUpperCase() as 'ASC' | 'DESC');
 
     try {
       return await query.getMany();
