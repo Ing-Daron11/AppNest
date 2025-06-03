@@ -120,17 +120,18 @@ export class MaintenanceService {
       offset = 0,
       sortBy = 'maintenance.date',
       sortOrder = 'DESC',
-      search,
     } = filters;
 
     const query = this.maintenanceRepository.createQueryBuilder('maintenance')
       .leftJoinAndSelect('maintenance.equipment', 'equipment')
       .leftJoinAndSelect('maintenance.technician', 'technician');
 
+    // Búsqueda general por descripción o nombre del equipo
     if (description) {
-      query.andWhere('maintenance.description ILIKE :description', {
-        description: `%${description}%`,
-      });
+      query.andWhere(
+        '(maintenance.description ILIKE :term OR equipment.name ILIKE :term)',
+        { term: `%${description}%` },
+      );
     }
 
     if (equipmentId) {
@@ -155,14 +156,10 @@ export class MaintenanceService {
       query.andWhere('maintenance.date <= :endDate', { endDate });
     }
 
-    if (search) {
-      query.andWhere(
-        '(maintenance.description ILIKE :search OR equipment.name ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    query.skip(offset).take(limit).orderBy(sortBy, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+    query
+      .skip(offset)
+      .take(limit)
+      .orderBy(sortBy, (sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'));
 
     try {
       return await query.getMany();
