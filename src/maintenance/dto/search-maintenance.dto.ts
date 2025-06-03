@@ -1,11 +1,7 @@
 import { IsOptional, IsString, IsUUID, IsDate, IsIn } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class SearchMaintenanceDto {
-  @IsOptional()
-  @IsString()
-  readonly description?: string;
-
   @IsOptional()
   @IsUUID()
   readonly equipmentId?: string;
@@ -44,7 +40,19 @@ export class SearchMaintenanceDto {
   @IsIn(['asc', 'desc'])
   readonly sortOrder?: 'asc' | 'desc';
 
+  // Permite que 'search' o 'term' se transformen en 'description'
+  @IsOptional()
+  @Transform(({ obj }) => obj.term ?? obj.search ?? obj.description ?? undefined)
+  @IsString()
+  readonly description?: string;
+
+  // Se incluye para evitar errores de validación si llega 'term'
   @IsOptional()
   @IsString()
-  readonly search?: string; // ✅ nuevo campo para búsquedas generales
+  readonly term?: string;
+
+  // También se permite 'search' explícitamente
+  @IsOptional()
+  @IsString()
+  readonly search?: string;
 }
