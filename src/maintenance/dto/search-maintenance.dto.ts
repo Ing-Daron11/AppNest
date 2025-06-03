@@ -43,4 +43,8 @@ export class SearchMaintenanceDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   readonly sortOrder?: 'asc' | 'desc';
+
+  @IsOptional()
+  @IsString()
+  readonly search?: string; // ✅ nuevo campo para búsquedas generales
 }
