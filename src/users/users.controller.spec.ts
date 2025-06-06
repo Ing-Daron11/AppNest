@@ -14,6 +14,7 @@ describe('UsersController', () => {
     password: 'hashed',
     roles: ['admin'],
     isActive: true,
+    equipment: [],
   };
 
   const mockService = {
