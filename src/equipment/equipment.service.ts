@@ -172,6 +172,12 @@ export class EquipmentService {
             .getMany();
     }
 
+    async releaseEquipment(id: string): Promise<Equipment> {
+        const equipment = await this.findOne(id);
+        equipment.user = null;
+        equipment.status = EquipmentStatus.AVAILABLE;
+        return this.equipmentRepository.save(equipment);
+    }
 
     async markAsRented(id: string, user?: User): Promise<Equipment> {
         return this.updateStatus(id, EquipmentStatus.RENTED, user);

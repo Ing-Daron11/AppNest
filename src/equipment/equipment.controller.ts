@@ -187,5 +187,16 @@ export class EquipmentController {
         
     }
 
+    @Patch(':id/release')
+    @Auth()
+    @ApiResponse({
+        status: 200,
+        description: 'Equipment released successfully',
+        type: Equipment,
+    })
+    async releaseEquipment(@Param('id') id: string): Promise<Equipment> {
+        return this.equipmentService.releaseEquipment(id);
+    }
+
 }
 

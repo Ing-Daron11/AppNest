@@ -26,6 +26,6 @@ export class Equipment {
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
-    @ManyToOne(() => User, (user) => user.equipment, { eager: true })
-    user: User;
+    @ManyToOne(() => User, (user) => user.equipment, { eager: true, nullable: true })
+    user: User | null;
 }
