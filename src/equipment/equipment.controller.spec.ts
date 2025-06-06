@@ -110,6 +110,7 @@ describe('EquipmentController', () => {
     expect(service.markInMaintenance).toHaveBeenCalledWith('uuid-1');
   });
 
+  // commentados
   // it('should update status to RENTED', async () => {
   //   const result = await controller.updateStatus('uuid-1', { status: EquipmentStatus.RENTED }, userMock);
   //   expect(result.status).toBe(EquipmentStatus.RENTED);
