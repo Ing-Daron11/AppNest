@@ -60,6 +60,7 @@ export class MaintenanceService {
 
   async findAll(pagination: PaginationDto): Promise<Maintenance[]> {
     const { limit = 10, offset = 0 } = pagination;
+
     return this.maintenanceRepository.find({
       take: limit,
       skip: offset,
@@ -109,16 +110,29 @@ export class MaintenanceService {
   }
 
   async search(filters: SearchMaintenanceDto): Promise<Maintenance[]> {
-    const { description, equipmentId, technicianId, limit = 10, offset = 0 } = filters;
+    const {
+      description,
+      equipmentId,
+      technicianId,
+      equipmentName,
+      startDate,
+      endDate,
+      limit = 10,
+      offset = 0,
+      sortBy = 'maintenance.date',
+      sortOrder = 'DESC',
+    } = filters;
 
     const query = this.maintenanceRepository.createQueryBuilder('maintenance')
       .leftJoinAndSelect('maintenance.equipment', 'equipment')
       .leftJoinAndSelect('maintenance.technician', 'technician');
 
+    // Filtro por búsqueda general
     if (description) {
-      query.andWhere('maintenance.description ILIKE :description', {
-        description: `%${description}%`,
-      });
+      query.andWhere(
+        '(maintenance.description ILIKE :term OR equipment.name ILIKE :term)',
+        { term: `%${description}%` },
+      );
     }
 
     if (equipmentId) {
@@ -129,7 +143,34 @@ export class MaintenanceService {
       query.andWhere('technician.id = :technicianId', { technicianId });
     }
 
-    query.skip(offset).take(limit).orderBy('maintenance.date', 'DESC');
+    if (equipmentName) {
+      query.andWhere('equipment.name ILIKE :equipmentName', {
+        equipmentName: `%${equipmentName}%`,
+      });
+    }
+
+    if (startDate) {
+      query.andWhere('maintenance.date >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('maintenance.date <= :endDate', { endDate });
+    }
+
+    // Validar columnas permitidas para evitar SQL Injection en sortBy
+    const allowedSortFields = [
+      'maintenance.date',
+      'maintenance.description',
+      'equipment.name',
+      'technician.name',
+    ];
+    const orderField = allowedSortFields.includes(sortBy) ? sortBy : 'maintenance.date';
+    const orderDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    query
+      .orderBy(orderField, orderDirection)
+      .skip(offset)
+      .take(limit);
 
     try {
       return await query.getMany();
