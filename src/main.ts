@@ -7,6 +7,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
 
+  //permitir el acceso a la API desde el frontend
+  //esto es para que el frontend pueda hacer peticiones a la API
   app.enableCors({
     origin: [process.env.FRONTEND_URL,
       'http://localhost:3000'],
